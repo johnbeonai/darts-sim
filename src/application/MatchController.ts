@@ -53,7 +53,7 @@ export class MatchController {
 
   private notify(message?: string, isNineDarter: boolean = false, nineDarterPlayerName?: string): void {
     const currentLeg = this.match.currentLeg;
-    const isPlayerTurn = currentLeg.currentTurnPlayerId === this.player.id;
+    const isPlayerTurn = currentLeg.currentTurnPlayerId === this.player.id || (currentLeg.currentTurnPlayerId === this.opponent.id && this.opponentProvider.type === 'manual');
 
     const event: MatchStateEvent = {
       currentTurnPlayerId: currentLeg.currentTurnPlayerId,
@@ -166,11 +166,12 @@ export class MatchController {
       AudioManager.playRequires(remaining, turnPlayerId === this.player.id ? undefined : this.opponent.name);
     }
 
-    if (turnPlayerId === this.player.id) {
-      this.status = 'awaiting_player_input';
-      this.notify('Your turn');
-    } else {
-      this.status = 'cpu_thinking';
+    const isOpponentHuman = this.opponentProvider.type === 'manual';
+      if (turnPlayerId === this.player.id || (turnPlayerId === this.opponent.id && isOpponentHuman)) {
+        this.status = 'awaiting_player_input';
+        this.notify(turnPlayerId === this.player.id ? 'Your turn' : `${this.opponent.name}'s turn`);
+      } else {
+        this.status = 'cpu_thinking';
       this.notify(`${this.opponent.name} is throwing...`);
 
       const delay = this.cpuDelayMs ?? SettingsManager.getCpuDelayMs();

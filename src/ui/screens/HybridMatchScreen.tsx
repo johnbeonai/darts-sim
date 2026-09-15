@@ -28,10 +28,12 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
 
   const match = controller.match;
   const leg = match.currentLeg;
-  const isPlayerTurn = matchState.isPlayerTurn;
-  const activePlayer = isPlayerTurn ? controller.player : controller.opponent;
+  const isMyTurn = matchState.isPlayerTurn;
+  const isP1Turn = matchState.currentTurnPlayerId === controller.player.id;
+  const activePlayerId = matchState.currentTurnPlayerId;
+  const activePlayer = activePlayerId === controller.player.id ? controller.player : controller.opponent;
 
-  const playerScore = leg.getRemainingScore(controller.player.id);
+  const playerScore = leg.getRemainingScore(activePlayerId);
   const oppScore = leg.getRemainingScore(controller.opponent.id);
 
   const p1Legs = matchState.legsWon[controller.player.id] || 0;
@@ -53,8 +55,8 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
   const quickPresets = [180, 140, 100, 85, 81, 60, 45, 41, 26];
 
   const handleQuickPreset = (total: number) => {
-    if (!isPlayerTurn || controller.status === 'match_completed') return;
-    const visit = Visit.fromTotal(controller.player.id, playerScore, total);
+    if (!isMyTurn || controller.status === 'match_completed') return;
+    const visit = Visit.fromTotal(activePlayerId, playerScore, total);
     controller.processPlayerVisit(visit);
   };
 
@@ -76,18 +78,18 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
   };
 
   const handleKeypadSubmit = () => {
-    if (!isPlayerTurn || !keypadInput) return;
+    if (!isMyTurn || !keypadInput) return;
     const total = parseInt(keypadInput, 10);
     if (isNaN(total) || total < 0 || total > 180) return;
 
-    const visit = Visit.fromTotal(controller.player.id, playerScore, total);
+    const visit = Visit.fromTotal(activePlayerId, playerScore, total);
     controller.processPlayerVisit(visit);
     setKeypadInput('');
   };
 
   const handleBust = () => {
-    if (!isPlayerTurn) return;
-    const visit = Visit.fromTotal(controller.player.id, playerScore, 0);
+    if (!isMyTurn) return;
+    const visit = Visit.fromTotal(activePlayerId, playerScore, 0);
     visit.isBust = true;
     visit.scoreAfter = playerScore;
     controller.processPlayerVisit(visit);
@@ -97,13 +99,13 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
   const handleDartSegmentClick = (segment: number) => {
     if (selectedDarts.length >= 3) return;
     try {
-      const dart = new DartResult(controller.player.id, segment, multiplier);
+      const dart = new DartResult(activePlayerId, segment, multiplier);
       const newDarts = [...selectedDarts, dart];
       setSelectedDarts(newDarts);
       setMultiplier(1); // Reset to single
 
       if (newDarts.length === 3) {
-        const visit = new Visit(controller.player.id, playerScore, newDarts);
+        const visit = new Visit(activePlayerId, playerScore, newDarts);
         controller.processPlayerVisit(visit);
         setSelectedDarts([]);
       }
@@ -175,11 +177,11 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
       <div className="grid grid-cols-2 gap-4">
         {/* Player 1 Card (Human) */}
         <div className={`p-6 rounded-3xl border-2 transition-all relative overflow-hidden ${
-          isPlayerTurn
+          isP1Turn
             ? 'bg-slate-900/90 border-amber-500 shadow-2xl shadow-amber-500/10'
             : 'bg-neutral-900/60 border-neutral-800 opacity-80'
         }`}>
-          {isPlayerTurn && (
+          {isP1Turn && (
             <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500 text-black text-[10px] font-black tracking-widest uppercase">
               <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping" />
               <span>AT THE OCHE</span>
@@ -211,11 +213,11 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
 
         {/* Player 2 Card (CPU / Opponent) */}
         <div className={`p-6 rounded-3xl border-2 transition-all relative overflow-hidden ${
-          !isPlayerTurn
+          !isP1Turn
             ? 'bg-slate-900/90 border-cyan-500 shadow-2xl shadow-cyan-500/10'
             : 'bg-neutral-900/60 border-neutral-800 opacity-80'
         }`}>
-          {!isPlayerTurn && (
+          {!isP1Turn && (
             <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-400 text-black text-[10px] font-black tracking-widest uppercase">
               <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping" />
               <span>OPPONENT THROWING</span>
@@ -266,7 +268,7 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
                   <button
                     key={pts}
                     type="button"
-                    disabled={!isPlayerTurn || pts > playerScore}
+                    disabled={!isMyTurn || pts > playerScore}
                     onClick={() => handleQuickPreset(pts)}
                     className="py-3 px-2 rounded-2xl bg-neutral-800 hover:bg-amber-500 hover:text-black font-black text-base transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-md hover:scale-105 active:scale-95"
                   >
@@ -275,7 +277,7 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
                 ))}
                 <button
                   type="button"
-                  disabled={!isPlayerTurn}
+                  disabled={!isMyTurn}
                   onClick={handleBust}
                   className="py-3 px-2 rounded-2xl bg-red-950/40 border border-red-500/40 text-red-300 hover:bg-red-500 hover:text-white font-black text-base transition-all shadow-md hover:scale-105 active:scale-95"
                 >
@@ -298,7 +300,7 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
                   <button
                     key={d}
                     type="button"
-                    disabled={!isPlayerTurn}
+                    disabled={!isMyTurn}
                     onClick={() => handleKeypadDigit(d)}
                     className="py-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-lg font-bold text-white transition-all active:scale-95"
                   >
@@ -307,7 +309,7 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
                 ))}
                 <button
                   type="button"
-                  disabled={!isPlayerTurn}
+                  disabled={!isMyTurn}
                   onClick={handleKeypadClear}
                   className="py-3 rounded-xl bg-neutral-800 hover:bg-red-900/50 text-xs font-bold text-red-400 transition-all"
                 >
@@ -315,7 +317,7 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
                 </button>
                 <button
                   type="button"
-                  disabled={!isPlayerTurn}
+                  disabled={!isMyTurn}
                   onClick={() => handleKeypadDigit('0')}
                   className="py-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-lg font-bold text-white transition-all active:scale-95"
                 >
@@ -323,7 +325,7 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
                 </button>
                 <button
                   type="button"
-                  disabled={!isPlayerTurn}
+                  disabled={!isMyTurn}
                   onClick={handleKeypadBackspace}
                   className="py-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-xs font-bold text-neutral-300 transition-all"
                 >
@@ -333,7 +335,7 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
 
               <button
                 type="button"
-                disabled={!isPlayerTurn || !keypadInput}
+                disabled={!isMyTurn || !keypadInput}
                 onClick={handleKeypadSubmit}
                 className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-base shadow-xl shadow-amber-500/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
@@ -416,7 +418,7 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
                 <button
                   key={seg}
                   type="button"
-                  disabled={!isPlayerTurn}
+                  disabled={!isMyTurn}
                   onClick={() => handleDartSegmentClick(seg)}
                   className={`py-3 rounded-xl font-black text-sm transition-all active:scale-95 ${
                     multiplier === 3
@@ -431,7 +433,7 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
               ))}
               <button
                 type="button"
-                disabled={!isPlayerTurn}
+                disabled={!isMyTurn}
                 onClick={() => handleDartSegmentClick(25)}
                 className="py-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500 hover:text-black font-black text-sm transition-all"
               >
@@ -439,7 +441,7 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
               </button>
               <button
                 type="button"
-                disabled={!isPlayerTurn}
+                disabled={!isMyTurn}
                 onClick={() => handleDartSegmentClick(0)}
                 className="py-3 rounded-xl bg-neutral-900 border border-neutral-700 text-neutral-400 hover:bg-neutral-800 font-bold text-sm transition-all"
               >
