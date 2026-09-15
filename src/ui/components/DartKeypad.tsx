@@ -140,6 +140,26 @@ export const DartKeypad: React.FC<DartKeypadProps> = ({
               <span className="text-xs text-neutral-500 block">Total</span>
               <span className="font-mono font-black text-xl text-white">{visitTotal}</span>
             </div>
+            {currentDarts.length > 0 && (
+              <div className="flex items-center gap-1.5 pl-2 border-l border-neutral-800">
+                <button
+                  type="button"
+                  onClick={handleUndo}
+                  className="px-2.5 py-1.5 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-neutral-300 text-xs font-semibold transition-all flex items-center gap-1"
+                >
+                  <Delete className="w-3.5 h-3.5" />
+                  Undo
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmVisit}
+                  className="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm rounded-lg transition-all shadow-lg flex items-center gap-1.5"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Confirm ({visitTotal})
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
