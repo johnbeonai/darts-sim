@@ -118,6 +118,13 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
     setSelectedDarts(prev => prev.slice(0, -1));
   };
 
+  const handleSubmitEarly = () => {
+    if (selectedDarts.length === 0) return;
+    const visit = new Visit(activePlayerId, playerScore, selectedDarts);
+    controller.processPlayerVisit(visit);
+    setSelectedDarts([]);
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto space-y-4 animate-fade-in pb-12">
       {/* Top Status & Controls */}
@@ -371,13 +378,24 @@ export const HybridMatchScreen: React.FC<HybridMatchScreenProps> = ({
               })}
 
               {selectedDarts.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleUndoDart}
-                  className="p-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleUndoDart}
+                    className="p-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
+                    title="Undo Last Dart"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmitEarly}
+                    className="p-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold flex items-center gap-2 transition-all shadow-md"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Confirm</span>
+                  </button>
+                </div>
               )}
             </div>
 
